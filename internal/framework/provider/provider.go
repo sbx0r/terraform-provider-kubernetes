@@ -70,8 +70,17 @@ type KubernetesProviderModel struct {
 	} `tfsdk:"exec"`
 
 	Experiments []struct {
-		ManifestResource types.Bool `tfsdk:"manifest_resource"`
+		ManifestResource  types.Bool               `tfsdk:"manifest_resource"`
+		AutoTokenProvider *autoTokenProviderConfig `tfsdk:"auto_token"`
 	} `tfsdk:"experiments"`
+}
+
+type autoTokenProviderConfig struct {
+	ProviderType     types.String            `tfsdk:"provider_type"`
+	AuthMethod       types.String            `tfsdk:"auth_method"`
+	RequestToken     types.String            `tfsdk:"request_token"`
+	RequestTokenPath types.String            `tfsdk:"request_token_path"`
+	EnvMapping       map[string]types.String `tfsdk:"env_mapping"`
 }
 
 func (p *KubernetesProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -183,6 +192,35 @@ func (p *KubernetesProvider) Schema(ctx context.Context, req provider.SchemaRequ
 							Description:        "Enable the `kubernetes_manifest` resource.",
 							Optional:           true,
 							DeprecationMessage: "The kubernetes_manifest resource is now permanently enabled and no longer considered an experiment. This flag has no effect and will be removed in the near future.",
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"auto_token_provider": schema.SingleNestedBlock{
+							Description: "Experimental: Configure automatic token acquisition for Kubernetes clusters.",
+							Attributes: map[string]schema.Attribute{
+								"provider_type": schema.StringAttribute{
+									Description: "The cloud provider type (azure, aws, gcp, or auto for automatic detection).",
+									Optional:    true,
+								},
+								"auth_method": schema.StringAttribute{
+									Description: "The authentication method to use (e.g., workload_identity).",
+									Optional:    true,
+								},
+								"request_token": schema.StringAttribute{
+									Description: "The token to use for token exchange.",
+									Optional:    true,
+									Sensitive:   true,
+								},
+								"request_token_path": schema.StringAttribute{
+									Description: "Path to a file containing the token to use for token exchange.",
+									Optional:    true,
+								},
+								"env_mapping": schema.MapAttribute{
+									Description: "Mapping of standard environment variable names to custom ones (e.g., {\"ARM_TENANT_ID\": \"MY_TENANT_ID\"}).",
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+							},
 						},
 					},
 				},
